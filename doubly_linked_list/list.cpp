@@ -1,212 +1,289 @@
 #include "list.h"
 
-struct Node
-{
-	int value = 0;
-	Node *previous = nullptr;
-	Node *next = nullptr;
-};
+#include <iostream>
+#include <stdexcept>
 
-struct List
-{
-	Node *head = nullptr;
-	Node *tail = nullptr;
-	int length = 0;
-};
+using namespace std;
 
-int value(const Node *targetNode)
+Node::Node(const KeyType &key, const ValueType &value, Node *n, Node *p)
 {
-	return targetNode->value;
+    this->key = key;
+    this->value = value;
+    this->next = n;
+    this->previous = p;
 }
 
-List *newList()
+List::List(Node *newHead, Node *newTail, const int &count)
 {
-	return new List;
+    this->head = newHead;
+    this->tail = newTail;
+    this->length = count;
 }
 
-Node *head(const List *list)
+int List::getLength()
 {
-	return list->head;
+    return length;
 }
 
-Node *tail(const List *list)
+Node *List::getHead()
 {
-	return list->tail;
+    return head;
 }
 
-Node *next(const Node *current)
+Node *List::getTail()
 {
-	return current->next;
+    return tail;
 }
 
-Node *previous(const Node *current)
+Node *List::getElementAt(const int &position)
 {
-	return current->previous;
+    if (position + 1 > length || position < 0)
+    {
+        cerr << "Requested element position: " << position << ", length of the list: " << length << endl;
+        throw range_error("Error: position is out of range or incorrect.");
+    }
+
+    auto *current = head;
+
+    for (int i = 0; i < position; ++i)
+    {
+        current = current->next;
+    }
+
+    // Always returns right pointer, because position always < length
+    // otherwise exception would be thrown
+    return current;
 }
 
-int listLength(const List *list)
+bool List::isEmpty()
 {
-	return list->length;
+    return length == 0;
 }
 
-bool isEmpty(const List *list)
+void List::pushBack(const KeyType &key, const ValueType &value)
 {
-	return list->length == 0;
+    tail = new Node(key, value, tail, nullptr);
+
+    if (isEmpty())
+    {
+        head = tail;
+    }
+    else
+    {
+        tail->previous->next = tail;
+    }
+
+    ++length;
 }
 
-bool removeNode(List *list, const int position)
+void List::pushFront(const KeyType &key, const ValueType &value)
 {
-	Node *targetNode = findNode(list, position);
+    head = new Node(key, value, nullptr, head);
 
-	if (targetNode == nullptr)
-	{
-		return false;
-	}
+    if (isEmpty())
+    {
+        tail = head;
+    }
+    else
+    {
+        head->next->previous = head;
+    }
 
-	if (targetNode->previous != nullptr)
-	{
-		targetNode->previous->next = targetNode->next;
-	}
-	else
-	{
-		list->head = targetNode->next;
-	}
-
-	if (targetNode->next != nullptr)
-	{
-		targetNode->next->previous = targetNode->previous;
-	}
-	else
-	{
-		list->tail = targetNode->previous;
-	}
-
-	--list->length;
-	delete targetNode;
-	return true;
+    ++length;
 }
 
-Node *findNode(const List *list, const int position)
+pair<KeyType, ValueType> List::popTail()
 {
-	Node *temp = list->head;
+    if (isEmpty())
+    {
+        cerr << "Could not pop from end of the list.\n\t List is already empty." << endl;
+        throw logic_error("Error: trying to delete element in empty list.");
+    }
 
-	for (int i = 0; i < position; ++i)
-	{
-		if (temp == nullptr)
-		{
-			return temp;
-		}
+    // make key-value pair to return
+    pair<KeyType, ValueType> data = make_pair(tail->key, tail->value);
+    auto *oldTail = tail;
 
-		temp = temp->next;
-	}
+    // correct pointers
+    if (length == 1)
+    {
+        tail = head = nullptr;
+    }
+    else
+    {
+        tail = tail->previous;
+        tail->next = nullptr;
 
-	return temp;
+    }
+    // actually delete tail element
+    delete oldTail;
+    --length;
+    return data;
 }
 
-bool exists(const List *list, const int targetValue) 
+pair<KeyType, ValueType> List::popHead()
 {
-	Node *temp = list->head;
+    if (isEmpty())
+    {
+        cerr << "Could not pop from beginning of the list.\n\t List is already empty." << endl;
+        throw logic_error("Error: trying to delete element in empty list.");
+    }
 
-	while (temp != nullptr)
-	{
-		if (temp->value == targetValue)
-		{
-			return true;
-		}
+    // make key-value pair to return
+    pair<KeyType, ValueType> data = make_pair(head->key, head->value);
+    auto *oldHead = head;
 
-		temp = temp->next;
-	}
+    // correct pointers
+    if (length == 1)
+    {
+        tail = head = nullptr;
+    }
+    else
+    {
+        head = head->next;
+        head->previous = nullptr;
 
-	return false;
+    }
+    // actually delete head element
+    delete oldHead;
+    --length;
+    return data;
 }
 
-void insertFirst(List *list, const int value)
+void List::insertAfter(const KeyType &key, const ValueType &value, const int &position)
 {
-	list->head = new Node{value, nullptr, list->head};
+    auto *previousNode = getElementAt(position);
+    auto *newNode = new Node(key, value, previousNode, previousNode->next);
 
-	if (isEmpty(list))
-	{
-		list->tail = list->head;
-	}
-	else
-	{
-		list->head->next->previous = list->head;
-	}
+    if (previousNode->next)
+    {
+        previousNode->next->previous = newNode;
+    }
+    else
+    {
+        tail = newNode;
+    }
 
-	++list->length;
+    previousNode->next = newNode;
+    ++length;
 }
 
-void insertLast(List *list, const int value)
+void List::insertBefore(const KeyType &key, const ValueType &value, const int &position)
 {
-	list->tail = new Node{value, list->tail, nullptr};
+    auto *nextNode = getElementAt(position);
+    auto *newNode = new Node(key, value, nextNode->previous, nextNode);
 
-	if (isEmpty(list))
-	{
-		list->head = list->tail;
-	}
-	else
-	{
-		list->tail->previous->next = list->tail;
-	}
+    if (nextNode->previous)
+    {
+        nextNode->previous->next = newNode;
+    }
+    else
+    {
+        head = newNode;
+    }
 
-	++list->length;
+    nextNode->previous = newNode;
+    ++length;
 }
 
-bool insertAfter(List *list, const int value, const int previousPosition)
+pair<KeyType, ValueType> List::removeElementAt(const int &position)
 {
-	Node *previousNode = findNode(list, previousPosition);
+    Node *target = getElementAt(position);
 
-	if (previousNode == nullptr)
-	{
-		return false;
-	}
+    if (target->previous)
+    {
+        target->previous->next = target->next;
+    }
+    else
+    {
+        head = target->next;
+    }
 
-	Node *newNode = new Node{value, previousNode, previousNode->next};
+    if (target->next)
+    {
+        target->next->previous = target->previous;
+    }
+    else
+    {
+        tail = target->previous;
+    }
 
-	if (previousNode->next != nullptr)
-	{
-		previousNode->next->previous = newNode;
-	}
-	else
-	{
-		list->tail = newNode;
-	}
-
-	previousNode->next = newNode;
-	++list->length;
-	return true;
+    --length;
+    pair<KeyType, ValueType> temp = make_pair(target->key, target->value);
+    delete target;
+    return temp;
 }
 
-bool insertBefore(List *list, const int value, const int nextPosition)
+int List::getPositionByKey(const KeyType &key)
 {
-	Node *nextNode = findNode(list, nextPosition);
+    auto *current = head;
+    int counter = 0;
 
-	if (nextNode == nullptr)
-	{
-		return false;
-	}
+    while (current)
+    {
+        if (key == current->key)
+        {
+            return counter;
+        }
 
-	Node *newNode = new Node{value, nextNode->previous, nextNode};
+        current = current->next;
+        ++counter;
+    }
 
-	if (nextNode->previous != nullptr)
-	{
-		nextNode->previous->next = newNode;
-	}
-	else
-	{
-		list->head = newNode;
-	}
-
-	nextNode->previous = newNode;
-	++list->length;
-	return true;
+    // no such key
+    return -1;
 }
 
-void deleteList(List *&list)
+int List::getPositionByValue(const ValueType &value) // if all values are unique
 {
-	while (removeNode(list, 0));
-	delete list;
-	list = nullptr;
+    auto *current = head;
+    int counter = 0;
+
+    while (current)
+    {
+        if (value == current->value)
+        {
+            return counter;
+        }
+
+        current = current->next;
+        ++counter;
+    }
+
+    // no such value
+    return -1;
 }
 
+bool List::isKeyExist(const KeyType &key)
+{
+    auto *current = head;
 
+    while (current)
+    {
+        if (key == current->key)
+        {
+            return true;
+        }
+
+        current = current->next;
+    }
+
+    return false;
+}
+
+bool List::isValueExists(const ValueType &value)
+{
+    auto *current = head;
+
+    while (current)
+    {
+        if (value == current->value)
+        {
+            return true;
+        }
+
+        current = current->next;
+    }
+
+    return false;
+}
