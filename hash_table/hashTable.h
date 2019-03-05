@@ -1,23 +1,38 @@
 #pragma once
+
 #include <string>
 #include <vector>
 
-struct HashTable;
+class HashTable
+{
+private:
+    int size = 0;
+    std::vector<std::vector<std::pair<std::string, std::string>>> buckets;
 
-//get pointer to the new hash table 
-HashTable *newTable();
+    // Generate a hash
+    unsigned long long getHash(const std::string &word);
 
-//get load factor of the table
-float loadFactor(const HashTable *hashTable);
+public:
+    // Create a new hash table
+    HashTable() = default;
 
-//add a word to the table
-void add(HashTable *hashTable, const std::string &key, const std::string &value);
+    // Delete hash table completely
+    ~HashTable() = default;
 
-//delete the table completely
-void deleteTable(HashTable *&hashTable);
+    explicit HashTable(unsigned int &baseSize);
 
-//check a word for existence in the table
-bool keyExists(const HashTable *hashTable, const std::string &key);
+    // Get load factor of the table
+    double loadFactor();
 
-//returns value from table by key
-std::string value(const HashTable *hashTable, const std::string &key);
+    // Expand size of the table, when it hits the limit
+    void expandSize();
+
+    // Add a word to the table
+    void addToTable(const std::string &key, const std::string &value);
+
+    // Returns value from table by key
+    std::string getValueByKey(const std::string &key);
+
+    // Check a word for existence in the table
+    bool keyExists(const std::string &key);
+};

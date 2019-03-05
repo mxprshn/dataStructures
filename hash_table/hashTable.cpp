@@ -3,102 +3,85 @@
 #include <vector>
 #include <algorithm>
 
-struct HashTable
-{
-	int elementsAmount = 0;
-	std::vector<std::vector<std::pair<std::string, std::string>>> buckets;
-};
+using namespace std;
 
-HashTable *newTable()
+HashTable::HashTable(unsigned int &baseSize)
 {
-	const int baseSize = 5;
-	HashTable *newHashTable = new HashTable;
-	newHashTable->buckets.resize(baseSize);
-	return newHashTable;
+    auto *newHashTable = new HashTable;
+    newHashTable->buckets.resize(baseSize);
 }
 
-float loadFactor(const HashTable *hashTable)
+double HashTable::loadFactor()
 {
-	return (float)hashTable->elementsAmount / (float)hashTable->buckets.size();
+    return (double) size / (double) buckets.size();
 }
 
-unsigned long long int hash(const std::string &word)
+unsigned long long HashTable::getHash(const string &word)
 {
-	unsigned long long int hashSum = 0;
-	int base = 1;
+    unsigned long long int hashSum = 0;
+    int base = 1;
+    const int constant = 53;
 
-	for (int i : word)
-	{
-		hashSum += base * i;
-		base *= 53;
-	}
+    for (int character : word)
+    {
+        hashSum += base * character;
+        base *= constant;
+    }
 
-	return hashSum;
+    return hashSum;
 }
 
-void expand(HashTable *hashTable)
+void HashTable::expandSize()
 {
-	hashTable->buckets.resize(hashTable->buckets.size() * 2);
+    buckets.resize(buckets.size() * 2);
 
-	std::vector<std::pair<std::string, std::string>> buffer;
+    vector<pair<string, string>> buffer;
 
-	for (size_t i = 0; i < (hashTable->buckets.size() / 2); ++i)
-	{
-		for (const std::pair<std::string, std::string> &current : hashTable->buckets[i])
-		{
-			buffer.push_back(current);
-		}
+    for (size_t i = 0; i < (buckets.size() / 2); ++i)
+    {
+        for (const pair<string, string> &current : buckets[i])
+        {
+            buffer.push_back(current);
+        }
 
-		hashTable->buckets[i].clear();		
-	}
+        buckets[i].clear();
+    }
 
-	hashTable->elementsAmount = 0;
+    size = 0;
 
-	for (const std::pair<std::string, std::string> &current : buffer)
-	{
-		add(hashTable, current.first, current.second);
-	}
+    for (const pair<string, string> &current : buffer)
+    {
+        this->addToTable(current.first, current.second);
+    }
 }
 
-void add(HashTable *hashTable, const std::string &key, const std::string &value)
+void HashTable::addToTable(const string &key, const string &value)
 {
-	if (loadFactor(hashTable) > 1.0)
-	{
-		expand(hashTable);
-	}
+    if (this->loadFactor() > 1.0)
+    {
+        this->expandSize();
+    }
 
-	const int keyHash = hash(key) % hashTable->buckets.size();
-	hashTable->buckets[keyHash].push_back({key, value});
-	++hashTable->elementsAmount;
+    const long long keyHash = getHash(key) % buckets.size();
+    buckets[keyHash].push_back({key, value});
+    ++size;
 }
 
-void deleteTable(HashTable *&hashTable)
+string HashTable::getValueByKey(const string &key)
 {
-	delete hashTable;
-	hashTable = nullptr;
+    const long long keyHash = getHash(key) % buckets.size();
+    for (const pair<string, string> &current : buckets[keyHash])
+    {
+        if (current.first == key)
+        {
+            return current.second;
+        }
+    }
+
+    return string();
 }
 
-std::string value(const HashTable *hashTable, const std::string &key)
+bool HashTable::keyExists(const string &key)
 {
-	const int keyHash = hash(key) % hashTable->buckets.size();
-	for (const std::pair<std::string, std::string> &current : hashTable->buckets[keyHash])
-	{
-		if (current.first == key)
-		{
-			return current.second;
-		}
-	}
-
-	return "";
+    return (this->getValueByKey(key)).empty();
 }
-
-bool keyExists(const HashTable *hashTable, const std::string &key)
-{
-	return value(hashTable, key) != "";
-}
-
-
-
-
-
-

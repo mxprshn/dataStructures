@@ -5,4 +5,8 @@ project(dataStructures)
 set(DoublyLinkedListSrc     doubly_linked_list/list.cpp
                             doubly_linked_list/list.h)
 
-add_executable(DList    ${DoublyLinkedListSrc})
+set(HashTable               hash_table/hashTable.cpp
+                            hash_table/hashTable.h)
+
+add_executable(DList        ${DoublyLinkedListSrc})
+add_executable(HashTable    ${HashTable})
