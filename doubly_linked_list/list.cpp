@@ -287,3 +287,18 @@ bool List::isValueExists(const ValueType &value)
 
     return false;
 }
+
+void List::deleteList()
+{
+    while (length > 0)
+    {
+        popHead();
+    };
+
+    tail = head = nullptr;
+}
+
+List::~List()
+{
+    deleteList();
+}
