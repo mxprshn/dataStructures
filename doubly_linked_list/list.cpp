@@ -13,11 +13,11 @@ Node::Node(const KeyType &key, const ValueType &value, Node *n, Node *p)
     this->previous = p;
 }
 
-List::List(Node *newHead, Node *newTail, const int &count)
+List::List(Node *newHead, Node *newTail, const int &size)
 {
     this->head = newHead;
     this->tail = newTail;
-    this->length = count;
+    this->length = size;
 }
 
 int List::getLength()
@@ -186,7 +186,7 @@ void List::insertBefore(const KeyType &key, const ValueType &value, const int &p
     ++length;
 }
 
-pair<KeyType, ValueType> List::removeElementAt(const int &position)
+pair<KeyType, ValueType> List::popElementAt(const int &position)
 {
     Node *target = getElementAt(position);
 
